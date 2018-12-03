@@ -1,5 +1,11 @@
 #!/usr/bin/python
 
+'''
+First Name - Mohammad
+Last Name - Umair
+Ubit Name - m39
+'''
+
 from pyspark import SparkConf, SparkContext
 import sys
 
@@ -47,15 +53,39 @@ def smallStarReduce(tup):
             to_return.append((v, m))
     return to_return
 
+def outputEdges(tup):
+    key = tup[0]
+    val = tup[1]
+    return str(key) + " " + str(val)
+
+def check_convergence(rdd1, rdd2):
+    diff_rdd = rdd.subtract(prev_rdd).union(prev_rdd.subtract(rdd))
+    if diff_rdd.count() == 0:
+        return True
+    return False
+
 if __name__ == "__main__":
     conf = SparkConf().setAppName("ComponentCount")
     sc = SparkContext(conf = conf)
     rdd = sc.textFile(sys.argv[1])
-    rdd = rdd.map(read_data).map(debug)
-    rdd.count()
-    rdd = rdd.flatMap(largeStarMap).groupByKey().flatMap(largeStarReduce)
-    print("=======")
-    rdd = rdd.map(smallStarMap).groupByKey().flatMap(smallStarReduce).map(debug)
-    print(rdd.count())
+    rdd = rdd.map(read_data)
+    while True:
+        while True:
+            prev_rdd = rdd
+            rdd = rdd.flatMap(largeStarMap).groupByKey().flatMap(largeStarReduce).distinct()
+            print("checking for large star convergence")
+            if check_convergence(prev_rdd, rdd):
+                break
+        prev_rdd = rdd
+        rdd = rdd.map(smallStarMap).groupByKey().flatMap(smallStarReduce).distinct()
+        print("checking for small star convergence")
+        if check_convergence(prev_rdd, rdd):
+            break
+    
+    vals_rdd = rdd.values().distinct()
+    print("components = " + str(vals_rdd.count()))
+    rdd = rdd.union(vals_rdd.map(lambda k: (k, k)))
+    rdd = rdd.map(outputEdges)
+    print("count = " + str(rdd.count()))
 
     # rdd.saveAsTextFile("file:/home/omerjerk/study/pdp/A2/output_data.txt")
