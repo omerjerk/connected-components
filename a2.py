@@ -72,13 +72,13 @@ if __name__ == "__main__":
     while True:
         while True:
             prev_rdd = rdd
-            rdd = rdd.flatMap(largeStarMap).groupByKey().flatMap(largeStarReduce).distinct()
-            print("checking for large star convergence")
+            rdd = rdd.flatMap(largeStarMap).groupByKey().flatMap(largeStarReduce)
+            #print("checking for large star convergence")
             if check_convergence(prev_rdd, rdd):
                 break
         prev_rdd = rdd
-        rdd = rdd.map(smallStarMap).groupByKey().flatMap(smallStarReduce).distinct()
-        print("checking for small star convergence")
+        rdd = rdd.map(smallStarMap).groupByKey().flatMap(smallStarReduce)
+        #print("checking for small star convergence")
         if check_convergence(prev_rdd, rdd):
             break
     
@@ -88,4 +88,4 @@ if __name__ == "__main__":
     rdd = rdd.map(outputEdges)
     print("count = " + str(rdd.count()))
 
-    # rdd.saveAsTextFile("file:/home/omerjerk/study/pdp/A2/output_data.txt")
+    rdd.saveAsTextFile("output")
